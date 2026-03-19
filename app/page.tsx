@@ -226,7 +226,11 @@ function NavBar({
   );
 }
 
-function SignInPanel() {
+interface SignInPanelProps {
+  onContinueAsGuest: () => void;
+}
+
+function SignInPanel({ onContinueAsGuest }: SignInPanelProps) {
   const handleGoogleSignIn = () => {
     void signIn('google', undefined, { prompt: 'select_account' });
   };
@@ -239,20 +243,30 @@ function SignInPanel() {
         </div>
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Sign in to start your quiz
+            Start your AI quiz
           </h1>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-            Use Google to save your session and continue generating personalized quizzes.
+            Continue as a guest right away, or sign in with Google to save quiz history.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 transition-all"
-        >
-          Continue with Google
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            onClick={onContinueAsGuest}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold text-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            Continue as guest
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 transition-all"
+          >
+            Continue with Google
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -264,6 +278,7 @@ export default function Home() {
   const { status, resetQuiz, setCurrentUserEmail, setHistory, fetchHistory } = useQuizStore();
   const { data: session, status: sessionStatus } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>('quiz');
+  const [isGuestMode, setIsGuestMode] = useState(false);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user?.email) {
@@ -287,10 +302,12 @@ export default function Home() {
   ]);
 
   const handleGoogleSignIn = () => {
+    setIsGuestMode(false);
     void signIn('google', undefined, { prompt: 'select_account' });
   };
 
   const handleSignOut = () => {
+    setIsGuestMode(false);
     resetQuiz();
     setActiveTab('quiz');
     void signOut({ redirect: false }).then(() => {
@@ -358,6 +375,26 @@ export default function Home() {
 
     // idle — show tabs
     if (activeTab === 'history') {
+      if (sessionStatus !== 'authenticated') {
+        return (
+          <div className="w-full max-w-2xl mx-auto px-4">
+            <div className="rounded-3xl border border-slate-200/70 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 shadow-xl p-6 sm:p-8 text-center space-y-4">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Sign in to view history</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Guest mode supports taking quizzes, but history is available only for signed-in users.
+              </p>
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 transition-all"
+              >
+                Sign in with Google
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <ScreenBoundary
           title="History unavailable"
@@ -415,9 +452,11 @@ export default function Home() {
             />
           )}
 
-          {sessionStatus === 'unauthenticated' && <SignInPanel />}
+          {sessionStatus === 'unauthenticated' && !isGuestMode && (
+            <SignInPanel onContinueAsGuest={() => setIsGuestMode(true)} />
+          )}
 
-          {sessionStatus === 'authenticated' && (
+          {(sessionStatus === 'authenticated' || isGuestMode) && (
             <>
           {/* Inline error alert (network / API errors) */}
           <ErrorAlert />
