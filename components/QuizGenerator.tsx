@@ -18,6 +18,26 @@ const DEFAULT_QUESTION_TYPE_MIX: QuestionTypeMix = {
   fill_blank: 20,
 };
 
+const QUESTION_TYPE_KEYS: Array<keyof QuestionTypeMix> = [
+  'multiple_choice',
+  'true_false',
+  'fill_blank',
+];
+
+const QUESTION_TYPE_LABELS: Record<keyof QuestionTypeMix, string> = {
+  multiple_choice: 'Multiple Choice',
+  true_false: 'True / False',
+  fill_blank: 'Fill in the Blank',
+};
+
+function clampPercentage(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function roundToStep(value: number, step = 5) {
+  return Math.round(value / step) * step;
+}
+
 // ─── Loading Skeleton component ───────────────────────────────
 
 function GeneratingSkeleton() {
@@ -71,6 +91,41 @@ export default function QuizGenerator() {
   const [validationMsg, setValidationMsg] = useState('');
 
   const isGenerating = status === 'generating';
+
+  const updateQuestionTypeMix = (changedKey: keyof QuestionTypeMix, rawValue: number) => {
+    setQuestionTypeMix((prev) => {
+      const nextValue = clampPercentage(roundToStep(rawValue));
+      const otherKeys = QUESTION_TYPE_KEYS.filter((key) => key !== changedKey) as [
+        keyof QuestionTypeMix,
+        keyof QuestionTypeMix,
+      ];
+
+      const [firstOtherKey, secondOtherKey] = otherKeys;
+      const remaining = 100 - nextValue;
+      const firstPrev = prev[firstOtherKey];
+      const secondPrev = prev[secondOtherKey];
+      const otherTotal = firstPrev + secondPrev;
+
+      let firstNext: number;
+      if (otherTotal === 0) {
+        firstNext = roundToStep(remaining / 2);
+      } else {
+        firstNext = roundToStep((firstPrev / otherTotal) * remaining);
+      }
+
+      firstNext = Math.max(0, Math.min(remaining, firstNext));
+      const secondNext = remaining - firstNext;
+
+      return {
+        ...prev,
+        [changedKey]: nextValue,
+        [firstOtherKey]: firstNext,
+        [secondOtherKey]: secondNext,
+      };
+    });
+
+    setValidationMsg('');
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -202,14 +257,10 @@ export default function QuizGenerator() {
             </span>
           </div>
 
-          {([
-            ['multiple_choice', 'Multiple Choice'],
-            ['true_false', 'True / False'],
-            ['fill_blank', 'Fill in the Blank'],
-          ] as const).map(([key, label]) => (
+          {QUESTION_TYPE_KEYS.map((key) => (
             <div key={key} className="space-y-1">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>{label}</span>
+                <span>{QUESTION_TYPE_LABELS[key]}</span>
                 <span className="font-semibold">{questionTypeMix[key]}%</span>
               </div>
               <input
@@ -220,10 +271,7 @@ export default function QuizGenerator() {
                 value={questionTypeMix[key]}
                 onChange={(e) => {
                   const nextValue = Number(e.target.value);
-                  setQuestionTypeMix((prev) => ({
-                    ...prev,
-                    [key]: nextValue,
-                  }));
+                  updateQuestionTypeMix(key, nextValue);
                 }}
                 disabled={isGenerating}
                 className="w-full accent-blue-600 cursor-pointer"
