@@ -137,6 +137,7 @@ type Tab = 'quiz' | 'history';
 interface NavBarProps {
   activeTab: Tab;
   onTabChange: (t: Tab) => void;
+  onOpenHelp: () => void;
   userName?: string | null;
   userImage?: string | null;
   onSignIn: () => void;
@@ -146,6 +147,7 @@ interface NavBarProps {
 function NavBar({
   activeTab,
   onTabChange,
+  onOpenHelp,
   userName,
   userImage,
   onSignIn,
@@ -182,6 +184,15 @@ function NavBar({
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={onOpenHelp}
+            className="shrink-0 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Open help"
+          >
+            Help
+          </button>
 
           {userName && (
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-slate-700 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80">
@@ -223,6 +234,116 @@ function NavBar({
         </div>
       </div>
     </nav>
+  );
+}
+
+interface HelpModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  canViewHistory: boolean;
+}
+
+function HelpModal({ isOpen, onClose, canViewHistory }: HelpModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quiz app help"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+        aria-label="Close help"
+      />
+
+      <div className="relative z-10 w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-6 sm:p-8">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">How to use AI Quiz</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Quick guide for creating quizzes, taking tests, and tracking your scores.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-10 w-10 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-5 text-sm text-slate-700 dark:text-slate-300">
+          <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">1. Start a quiz</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Open the Quiz tab and enter any topic (for example: Algebra, Biology, React).</li>
+              <li>Set your question count and difficulty level.</li>
+              <li>Adjust question type percentages. The sliders auto-balance and always keep the total at 100%.</li>
+              <li>Select Generate Quiz to create your questions.</li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">2. Attend the quiz</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Read each question and choose or type your answer.</li>
+              <li>Use navigation controls to move through questions.</li>
+              <li>Submit when you are done to calculate your score and performance.</li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">3. View results</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>After submitting, the Results screen shows your score and percentage.</li>
+              <li>Review correct vs incorrect answers to understand mistakes.</li>
+              <li>Use the action buttons to start another quiz or move to history.</li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">4. Quiz history</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Open the History tab to see previous attempts and scores over time.</li>
+              <li>History is linked to your signed-in Google account.</li>
+              <li>
+                {canViewHistory
+                  ? 'You are signed in, so your history is available now.'
+                  : 'You are currently in guest mode. Sign in with Google to save and view score history.'}
+              </li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">5. Account and navigation notes</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Guest mode lets you take quizzes immediately without signing in.</li>
+              <li>If a quiz is in progress, switching tabs asks for confirmation so you do not lose work accidentally.</li>
+              <li>Use the Help button anytime from the top bar.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -279,6 +400,7 @@ export default function Home() {
   const { data: session, status: sessionStatus } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>('quiz');
   const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user?.email) {
@@ -438,6 +560,7 @@ export default function Home() {
         <NavBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
+          onOpenHelp={() => setIsHelpOpen(true)}
           userName={session?.user?.name}
           userImage={session?.user?.image}
           onSignIn={handleGoogleSignIn}
@@ -482,10 +605,28 @@ export default function Home() {
           )}
         </main>
 
+        {!isHelpOpen && (
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen(true)}
+            aria-label="Open help"
+            className="fixed right-4 z-40 h-12 min-w-[3rem] rounded-full px-4 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 shadow-xl shadow-blue-300/40 dark:shadow-blue-900/40 hover:from-blue-500 hover:to-cyan-500 active:scale-95 transition-all"
+            style={{ bottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))' }}
+          >
+            Help
+          </button>
+        )}
+
         {/* Footer */}
         <footer className="text-center px-4 py-8 text-xs text-slate-400 dark:text-slate-600">
           AI Quiz · Powered by Next.js 14 + Zustand
         </footer>
+
+        <HelpModal
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+          canViewHistory={sessionStatus === 'authenticated'}
+        />
         </div>
       </div>
     </ErrorBoundary>
