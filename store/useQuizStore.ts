@@ -347,6 +347,26 @@ export const useQuizStore = create<QuizState>()(
     {
       name: STORE_PERSIST_KEY,
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+
+        const hasConfig = Boolean(state.config?.topic?.trim());
+        const hasQuestions = state.questions.length > 0;
+        const hasValidQuestionIndex =
+          state.currentQuestionIndex >= 0 &&
+          state.currentQuestionIndex < state.questions.length;
+
+        const shouldReset =
+          // Never resume a stale in-flight generation request.
+          state.status === 'generating' ||
+          // Taking/results must have a coherent quiz payload.
+          ((state.status === 'taking' || state.status === 'results') &&
+            (!hasConfig || !hasQuestions || !hasValidQuestionIndex));
+
+        if (shouldReset) {
+          state.resetQuiz();
+        }
+      },
       // Only persist history and the current quiz progress.
       // Exclude transient UI states on the assumption that a page refresh
       // should gracefully resume a quiz in-progress.
