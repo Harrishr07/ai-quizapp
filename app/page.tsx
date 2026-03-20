@@ -137,7 +137,6 @@ type Tab = 'quiz' | 'history';
 interface NavBarProps {
   activeTab: Tab;
   onTabChange: (t: Tab) => void;
-  onOpenHelp: () => void;
   userName?: string | null;
   userImage?: string | null;
   onSignIn: () => void;
@@ -147,7 +146,6 @@ interface NavBarProps {
 function NavBar({
   activeTab,
   onTabChange,
-  onOpenHelp,
   userName,
   userImage,
   onSignIn,
@@ -184,15 +182,6 @@ function NavBar({
               </button>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={onOpenHelp}
-            className="shrink-0 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Open help"
-          >
-            Help
-          </button>
 
           {userName && (
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-slate-700 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80">
@@ -306,7 +295,9 @@ function HelpModal({ isOpen, onClose, canViewHistory }: HelpModalProps) {
             <h3 className="font-bold text-slate-900 dark:text-white mb-2">2. Attend the quiz</h3>
             <ul className="list-disc pl-5 space-y-1">
               <li>Read each question and choose or type your answer.</li>
-              <li>Use navigation controls to move through questions.</li>
+              <li>Use <strong>Mark for review</strong> on any question you want to revisit before submitting.</li>
+              <li>Use <strong>Clear selection</strong> to remove your current answer for the active question and leave it unanswered.</li>
+              <li>Use the previous/next navigation controls to move through questions.</li>
               <li>Submit when you are done to calculate your score and performance.</li>
             </ul>
           </section>
@@ -338,7 +329,7 @@ function HelpModal({ isOpen, onClose, canViewHistory }: HelpModalProps) {
             <ul className="list-disc pl-5 space-y-1">
               <li>Guest mode lets you take quizzes immediately without signing in.</li>
               <li>If a quiz is in progress, switching tabs asks for confirmation so you do not lose work accidentally.</li>
-              <li>Use the Help button anytime from the top bar.</li>
+              <li>Use the Help button anytime from the bottom-right corner.</li>
             </ul>
           </section>
         </div>
@@ -560,7 +551,6 @@ export default function Home() {
         <NavBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          onOpenHelp={() => setIsHelpOpen(true)}
           userName={session?.user?.name}
           userImage={session?.user?.image}
           onSignIn={handleGoogleSignIn}
