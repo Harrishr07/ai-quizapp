@@ -4,6 +4,8 @@ AI Quiz App is a Next.js-based quiz platform that generates questions using an A
 
 <img width="1919" height="998" alt="image" src="https://github.com/user-attachments/assets/ee583596-4596-4da4-9eff-f454e71d9a08" />
 
+Production URL for live demo:https://harrishr-ai-quizapp.vercel.app/
+
 ## Tech Stack
 
 - Framework: Next.js 14 (App Router)
